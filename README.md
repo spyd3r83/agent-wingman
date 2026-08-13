@@ -28,6 +28,12 @@ The detector is deterministic and bounded. It does not call another model, uploa
 - Fails open: detector or delivery errors never block OpenCode.
 - Uses a version-neutral runtime adapter with no OpenCode package dependency or exact-version gate.
 
+## Inline advisory
+
+When the detector identifies a high-confidence low-progress loop, Agent Wingman adds a concise synthetic advisory at the session boundary. The message is explicitly marked as plugin-generated and uses `noReply` so it does not start another model turn automatically.
+
+![Agent Wingman synthetic advisory displayed inline in OpenCode](./assets/agent-wingman-synthetic-advisory.png)
+
 ## Install
 
 ### From source today
