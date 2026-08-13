@@ -1,4 +1,4 @@
-import plugin, { AgentWingmanPlugin } from "../src/index"
+import plugin from "../src/index"
 
 const logs: unknown[] = []
 const toasts: unknown[] = []
@@ -14,7 +14,7 @@ const input = {
   serverUrl: new URL("http://localhost"),
   $: {} as never,
 }
-const hooks = await AgentWingmanPlugin(input as never, {
+const hooks = await plugin.server(input as never, {
   mode: "notify",
   minRelevantActions: 1,
   cooldownMs: 0,

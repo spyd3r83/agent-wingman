@@ -5,9 +5,6 @@ import { redactSensitive } from "./fingerprint"
 import { OpenCodeEventAdapter } from "./opencode"
 import type { RawTraceEvent } from "./types"
 
-export { WingmanEngine } from "./engine"
-export { loadConfig } from "./config"
-export { OpenCodeEventAdapter } from "./opencode"
 export type { RawTraceEvent, ReplayResult, WingmanConfig } from "./types"
 
 /**
@@ -38,7 +35,9 @@ export interface OpenCodePluginModule {
   server: OpenCodePlugin
 }
 
-export const AgentWingmanPlugin: OpenCodePlugin = async (input, options): Promise<OpenCodeHookSet> => {
+export type OpenCodeCallablePluginModule = OpenCodePlugin & OpenCodePluginModule
+
+const AgentWingmanPlugin: OpenCodePlugin = async (input, options): Promise<OpenCodeHookSet> => {
   const config = loadConfig(options)
   const engine = new WingmanEngine(config)
   const eventAdapter = new OpenCodeEventAdapter(config.maxSessions * config.maxObservations)
@@ -79,7 +78,10 @@ export const AgentWingmanPlugin: OpenCodePlugin = async (input, options): Promis
   }
 }
 
-const pluginModule = { id: "agent-wingman", server: AgentWingmanPlugin } satisfies OpenCodePluginModule
+const pluginModule = Object.assign(AgentWingmanPlugin, {
+  id: "agent-wingman",
+  server: AgentWingmanPlugin,
+}) satisfies OpenCodeCallablePluginModule
 
 export default pluginModule
 

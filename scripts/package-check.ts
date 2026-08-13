@@ -3,6 +3,15 @@ import { access, readFile } from "node:fs/promises"
 const required = ["dist/src/index.js", "dist/src/index.d.ts", "dist/bin/replay.js", "LICENSE", "README.md"]
 for (const file of required) await access(file)
 
+const pluginModule = await import(`../dist/src/index.js?package-check=${Date.now()}`)
+const runtimeExports = Object.keys(pluginModule)
+if (runtimeExports.length !== 1 || runtimeExports[0] !== "default") {
+  throw new Error(`runtime plugin entry must export only default; found ${runtimeExports.join(",")}`)
+}
+if (pluginModule.default?.id !== "agent-wingman") throw new Error("plugin default id mismatch")
+if (typeof pluginModule.default !== "function") throw new Error("plugin default must be callable for legacy loaders")
+if (typeof pluginModule.default?.server !== "function") throw new Error("plugin default server missing")
+
 const manifest = JSON.parse(await readFile("package.json", "utf8")) as Record<string, unknown>
 if (manifest.private === true) throw new Error("package.json is still private")
 if (manifest.name !== "opencode-agent-wingman") throw new Error("unexpected package name")
