@@ -1,30 +1,32 @@
 # Architecture
 
-Agent Wingman separates detection from delivery.
+Agent Wingman separates event ingestion, detection, policy, and delivery.
 
 ```text
-OpenCode V1 hooks
-  -> event normalizer
-  -> bounded session state
+OpenCode stable hooks and events
+  -> deduplicating OpenCode adapter
+  -> event normalizer and ephemeral HMAC fingerprints
+  -> bounded per-session state
   -> deterministic detectors
-  -> scorer and policy
-  -> delivery adapter
+  -> scoring, cooldown, and rate policy
+  -> shadow, notify, or opt-in injection adapter
 ```
 
 ## Core modules
 
-- `src/normalizer.ts` converts raw plugin and replay events into compact observations.
-- `src/fingerprint.ts` redacts likely secrets and hashes normalized material.
-- `src/state.ts` keeps bounded per-session observations and episode state in memory.
-- `src/detectors.ts` produces positive and negative struggle signals.
-- `src/policy.ts` applies scoring, hysteresis, cooldown, and deduplication.
-- `src/adapters.ts` delivers shadow logs, TUI toasts, or gated no-reply prompts.
-- `bin/replay.ts` evaluates labelled traces without OpenCode.
+- `src/opencode.ts` converts terminal tool and assistant-text events into one deduplicated stream. The event path covers runtimes where `tool.execute.after` is unavailable or incomplete.
+- `src/normalizer.ts` derives compact observations and progress markers.
+- `src/fingerprint.ts` redacts likely secrets and creates process-local keyed fingerprints.
+- `src/state.ts` keeps bounded observations.
+- `src/detectors.ts` emits positive and negative struggle signals.
+- `src/policy.ts` applies scoring, cooldown, per-episode caps, and rate limits.
+- `src/adapters.ts` uses the current OpenCode SDK request shapes for structured logs, TUI notifications, and gated no-reply messages.
+- `bin/replay.ts` evaluates labelled synthetic traces without a model.
 
-## State model
+## Data boundary
 
-The MVP stores fingerprints, event classes, status, and derived facts. It does not persist raw prompts, tool output, source files, command results, or private transcripts.
+The retained in-memory state contains event classes, booleans, timestamps, keyed fingerprints, and short fixed explanations. It does not retain raw prompts, tool arguments, tool output, source files, command results, or real transcripts. Every session collection and cross-session collection has a hard limit.
 
 ## Fail-open rule
 
-Detection and delivery errors are caught inside hooks. The plugin never blocks OpenCode tool execution because the detector failed.
+Every plugin hook catches detector and delivery failures. The plugin never denies a permission, alters tool arguments, or blocks OpenCode because the detector failed.

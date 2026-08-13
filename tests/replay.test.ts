@@ -3,7 +3,7 @@ import { glob } from "node:fs/promises"
 import { metrics, replayFile } from "../bin/replay"
 
 describe("trace replay corpus", () => {
-  test("meets initial precision and recall gates", async () => {
+  test("meets precision, recall, and duplicate gates", async () => {
     const files: string[] = []
     for await (const file of glob("fixtures/traces/*.json")) files.push(file)
     const results = await Promise.all(files.map(replayFile))

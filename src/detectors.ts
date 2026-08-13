@@ -61,7 +61,7 @@ function planRestatementSimilarity(state: SessionState): Detection | undefined {
 function consultationChurn(state: SessionState): Detection | undefined {
   const consultations = recent(state, 10).filter((event) => event.toolClass === "consultation")
   const key = countKey(consultations, (event) => event.actionFingerprint)
-  const edited = recent(state, 10).some((event) => event.toolClass === "edit")
+  const edited = recent(state, 10).some((event) => event.toolClass === "edit" && event.success !== false)
   if (!key || key.count < 3 || edited) return undefined
   return make("consultation_churn", 2, key.value, "Consultation repeated without implementation or changed hypothesis.", { count: key.count })
 }
@@ -74,7 +74,7 @@ function successfulResolution(event: NormalizedEvent, state: SessionState): Dete
 }
 
 function meaningfulChange(event: NormalizedEvent): Detection | undefined {
-  if (event.toolClass !== "edit") return undefined
+  if (event.toolClass !== "edit" || event.success === false) return undefined
   return make("meaningful_change", -2, event.actionFingerprint, "An edit changed the apparent work area.", { changed: true })
 }
 
@@ -90,6 +90,11 @@ function make(kind: Detection["kind"], score: number, key: string, explanation: 
 
 function countKey<T>(items: T[], select: (item: T) => string): { value: string; count: number } | undefined {
   const counts = new Map<string, number>()
-  for (const item of items) counts.set(select(item), (counts.get(select(item)) ?? 0) + 1)
-  return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([value, count]) => ({ value, count }))[0]
+  for (const item of items) {
+    const key = select(item)
+    counts.set(key, (counts.get(key) ?? 0) + 1)
+  }
+  return [...counts.entries()]
+    .sort((left, right) => right[1] - left[1])
+    .map(([value, count]) => ({ value, count }))[0]
 }

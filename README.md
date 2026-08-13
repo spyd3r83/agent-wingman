@@ -1,83 +1,114 @@
-# Agent Wingman for OpenCode
+<p align="center">
+  <img src="./assets/agent-wingman-logo.svg" width="190" alt="Agent Wingman: a friendly winged robot keeping watch" />
+</p>
 
-Agent Wingman for OpenCode detects repetitive, low-progress agent behaviour locally and gives concise, explainable nudges before a loop becomes expensive.
+<h1 align="center">Agent Wingman for OpenCode</h1>
 
-This project is community-maintained. It is not an official OpenCode product.
+<p align="center"><strong>No agent goes alone.</strong></p>
 
-The current repository is a private detector-first MVP. The durable product is the deterministic detector, not prompt injection.
+<p align="center">
+  A local, detector-first OpenCode plugin that notices repetitive, low-progress work and gives a concise nudge before the loop becomes expensive.
+</p>
 
-## What ships in v0.1
+> **Status:** `0.1.0` release candidate. The package is prepared for public npm publishing but is not published yet. This is a community project, not an official OpenCode product.
 
-- Local event normalization for tool, message, session, and consultation-style observations.
-- Bounded in-memory session state.
-- Secret-aware fingerprints that avoid storing raw tool output in advisories.
-- Deterministic signals for repeated failures, failure recurrence, read/search churn, zero productive delta, high error density, plan repetition, and consultation churn.
-- Scoring, thresholding, cooldown, episode deduplication, self-event exclusion, and fail-open delivery.
-- Trace replay CLI with labelled productive and unproductive fixtures.
-- Shadow mode and notify-only mode.
-- Experimental model-facing no-reply adapter, disabled by default, with notify fallback.
+## Why Agent Wingman
 
-## What does not ship
+Coding agents can repeat the same failing command, revisit the same file or search, restate a plan, or keep consulting without changing the hypothesis. Agent Wingman watches OpenCode's local event stream for those patterns and intervenes only when repetition and low progress occur together.
 
-- No telemetry, network calls, or persistence by default.
-- No model classifier, embeddings, vector database, dashboard, or remote service.
-- No automatic browsing, tool execution, file mutation, or agent delegation.
-- No real private transcripts or internal infrastructure details.
+The detector is deterministic and bounded. It does not call another model, upload transcripts, or block tool execution.
 
-## Install for local development
+## What it does
+
+- Observes terminal tool results through both `tool.execute.after` and the stable event stream, deduplicating the two paths.
+- Observes completed assistant text without treating user prompts as agent struggle.
+- Detects repeated failures, error-family recurrence, read/search churn, plan repetition, consultation churn, and dense low-progress windows.
+- Applies confidence scoring, cooldowns, per-episode caps, and global rate limits.
+- Defaults to a user-visible TUI notification; model-facing injection is explicit and off by default.
+- Fails open: detector or delivery errors never block OpenCode.
+
+## Install
+
+### From source today
 
 ```bash
+git clone https://github.com/spyd3r83/agent-wingman.git
+cd agent-wingman
 bun install
 bun run verify
+bun run build
+mkdir -p /path/to/project/.opencode/plugins
+cp dist/src/index.js /path/to/project/.opencode/plugins/agent-wingman.js
 ```
 
-## OpenCode plugin configuration
+OpenCode automatically loads JavaScript files in `.opencode/plugins/` on startup.
 
-For local plugin loading, point OpenCode at the built plugin entry after running `bun run build`.
-
-```json
-{
-  "plugin": ["./dist/src/index.js"]
-}
-```
-
-Recommended default:
-
-```json
-{
-  "plugin": [["./dist/src/index.js", { "mode": "shadow" }]]
-}
-```
-
-Use notify-only mode after reviewing trace results:
-
-```json
-{
-  "plugin": [["./dist/src/index.js", { "mode": "notify" }]]
-}
-```
-
-Model-facing injection requires both `mode: "inject"` and `experimentalInject: true`. Do not enable it until compatibility testing has passed for the exact OpenCode version in use.
-
-## Trace replay
+### After the first npm release
 
 ```bash
+opencode plugin opencode-agent-wingman
+```
+
+Or add it to `opencode.json`:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["opencode-agent-wingman"]
+}
+```
+
+## Modes
+
+| Mode | Model-visible | Behaviour |
+|---|---:|---|
+| `notify` | No | Default. Shows a warning toast and writes a structured local log. |
+| `shadow` | No | Logs eligible interventions without displaying them. Good for calibration. |
+| `inject` | Yes, opt-in | Adds a synthetic no-reply message. Requires `experimentalInject: true`; falls back to notify on failure. |
+
+Example with options:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": [["opencode-agent-wingman", { "mode": "shadow", "threshold": 9 }]]
+}
+```
+
+See [CONFIGURATION.md](./CONFIGURATION.md) for every bounded option.
+
+## Privacy and safety
+
+- No telemetry, external service, persistence, or network call is added by the plugin.
+- Raw prompts, tool arguments, tool output, source files, and command results are not retained.
+- Secret-shaped values are redacted before fingerprinting.
+- Fingerprints use an ephemeral per-process HMAC key, so they cannot be correlated across restarts.
+- Advisories are fixed templates and never quote untrusted tool output.
+- Session observations, episode state, and deduplication state all have hard memory bounds.
+
+Read [PRIVACY.md](./PRIVACY.md) and [SECURITY.md](./SECURITY.md) for the full boundaries.
+
+## Validation
+
+```bash
+bun test
+bun run typecheck
 bun run trace:replay
+bun run smoke
+bun run smoke:opencode
+bun run package:check
 ```
 
-The replay command exits non-zero if the fixture corpus falls below the current precision or recall gates.
+`smoke:opencode` builds the distributable plugin, loads it through a real OpenCode `1.18.18` CLI in an isolated project, and requires the plugin's initialization receipt. The trace corpus separately enforces precision, recall, and duplicate-intervention gates.
 
-## Fresh-clone smoke path
+## Scope
 
-After a remote exists:
+Agent Wingman is advisory. It does not browse, execute tools, mutate files, delegate agents, make access-control decisions, or claim that deterministic detection can identify every unproductive loop. Start in `shadow` mode when evaluating unfamiliar workflows.
 
-```bash
-git clone <private-repo-url> agent-wingman-smoke
-cd agent-wingman-smoke
-bun install
-bun run verify
-```
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md). Detection changes need a labelled synthetic trace that explains the false positive or false negative being addressed.
 
 ## License
 
-Apache-2.0. See `LICENSE`.
+Apache-2.0. See [LICENSE](./LICENSE).
