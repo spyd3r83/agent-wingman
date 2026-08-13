@@ -4,9 +4,9 @@
   "description": "Detector-first local struggle detection plugin for OpenCode.",
   "type": "module",
   "private": true,
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
   "bin": {
-    "agent-wingman-replay": "dist/cli/replay.js"
+    "agent-wingman-replay": "dist/bin/replay.js"
   },
   "files": ["dist", "README.md", "docs", "assets"],
   "scripts": {
@@ -16,6 +16,7 @@
     "test": "bun test",
     "trace:replay": "bun run bin/replay.ts fixtures/traces/*.json",
     "smoke": "bun run scripts/smoke.ts",
+    "package:check": "bun run build && test -f dist/src/index.js && test -f dist/bin/replay.js && bun pm pack --dry-run",
     "verify": "bun test && bun run typecheck && bun run build && bun run trace:replay && bun run smoke"
   },
   "dependencies": {

@@ -13,13 +13,13 @@ Configuration can be supplied through plugin options or environment variables.
 Recommended initial setting:
 
 ```json
-[["./dist/index.js", { "mode": "shadow" }]]
+[["./dist/src/index.js", { "mode": "shadow" }]]
 ```
 
 Notify-only setting:
 
 ```json
-[["./dist/index.js", { "mode": "notify" }]]
+[["./dist/src/index.js", { "mode": "notify" }]]
 ```
 
 Do not enable `inject` mode until exact-version compatibility tests pass.

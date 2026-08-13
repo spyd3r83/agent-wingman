@@ -37,7 +37,7 @@ For local plugin loading, point OpenCode at the built plugin entry after running
 
 ```json
 {
-  "plugin": ["./dist/index.js"]
+  "plugin": ["./dist/src/index.js"]
 }
 ```
 
@@ -45,7 +45,7 @@ Recommended default:
 
 ```json
 {
-  "plugin": [["./dist/index.js", { "mode": "shadow" }]]
+  "plugin": [["./dist/src/index.js", { "mode": "shadow" }]]
 }
 ```
 
@@ -53,7 +53,7 @@ Use notify-only mode after reviewing trace results:
 
 ```json
 {
-  "plugin": [["./dist/index.js", { "mode": "notify" }]]
+  "plugin": [["./dist/src/index.js", { "mode": "notify" }]]
 }
 ```
 
