@@ -65,7 +65,7 @@ describe("WingmanEngine", () => {
 })
 
 describe("delivery adapters", () => {
-  test("uses the current OpenCode TUI request shape", async () => {
+  test("uses the stable OpenCode TUI request shape", async () => {
     const calls: unknown[] = []
     const result = await deliverDecision({
       tui: { showToast: async (input: unknown) => { calls.push(input) } },

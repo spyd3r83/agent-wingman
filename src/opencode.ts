@@ -1,9 +1,4 @@
-import type { Hooks } from "@opencode-ai/plugin"
 import type { RawTraceEvent } from "./types"
-
-type OpenCodeEvent = Parameters<NonNullable<Hooks["event"]>>[0]["event"]
-type ToolAfterInput = Parameters<NonNullable<Hooks["tool.execute.after"]>>[0]
-type ToolAfterOutput = Parameters<NonNullable<Hooks["tool.execute.after"]>>[1]
 
 export class OpenCodeEventAdapter {
   private readonly messageRoles = new Map<string, MessageIdentity>()
@@ -16,94 +11,125 @@ export class OpenCodeEventAdapter {
     this.seenTerminalEvents = new BoundedSet(bounded)
   }
 
-  fromToolAfter(input: ToolAfterInput, output: ToolAfterOutput): RawTraceEvent | undefined {
-    if (!this.seenTerminalEvents.add(`tool:${input.sessionID}:${input.callID}`)) return undefined
-    const success = successFromMetadata(output.metadata)
+  fromToolAfter(input: unknown, output: unknown): RawTraceEvent | undefined {
+    const inputRecord = asRecord(input)
+    const outputRecord = asRecord(output)
+    const sessionID = asString(inputRecord?.sessionID)
+    const callID = asString(inputRecord?.callID)
+    const tool = asString(inputRecord?.tool)
+    if (!sessionID || !callID || !tool) return undefined
+    if (!this.seenTerminalEvents.add(`tool:${sessionID}:${callID}`)) return undefined
+    const success = successFromMetadata(outputRecord?.metadata)
     return {
       kind: "tool",
-      sessionID: input.sessionID,
-      tool: input.tool,
-      callID: input.callID,
-      args: input.args,
-      output: output.output,
+      sessionID,
+      tool,
+      callID,
+      args: inputRecord?.args,
+      output: outputRecord?.output,
       ...(success === undefined ? {} : { success }),
       timestamp: Date.now(),
       source: "tool.execute.after",
     }
   }
 
-  fromEvent(event: OpenCodeEvent): RawTraceEvent[] {
-    if (event.type === "message.updated") {
-      this.rememberMessageRole(
-        event.properties.info.id,
-        event.properties.info.sessionID,
-        event.properties.info.role,
-      )
+  fromEvent(eventInput: unknown): RawTraceEvent[] {
+    const event = asRecord(eventInput)
+    const type = asString(event?.type)
+    const properties = asRecord(event?.properties)
+
+    if (type === "message.updated") {
+      const info = asRecord(properties?.info)
+      const messageID = asString(info?.id)
+      const sessionID = asString(info?.sessionID)
+      const role = info?.role
+      if (messageID && sessionID && (role === "user" || role === "assistant")) {
+        this.rememberMessageRole(messageID, sessionID, role)
+      }
       return []
     }
 
-    if (event.type === "message.removed") {
-      this.messageRoles.delete(event.properties.messageID)
+    if (type === "message.removed") {
+      const messageID = asString(properties?.messageID)
+      if (messageID) this.messageRoles.delete(messageID)
       return []
     }
 
-    if (event.type === "message.part.updated") {
-      const part = event.properties.part
-      if (part.type === "tool" && (part.state.status === "completed" || part.state.status === "error")) {
-        const key = `tool:${part.sessionID}:${part.callID}`
+    if (type === "message.part.updated") {
+      const part = asRecord(properties?.part)
+      const partType = asString(part?.type)
+      const sessionID = asString(part?.sessionID)
+      const messageID = asString(part?.messageID)
+      const partID = asString(part?.id)
+
+      if (partType === "tool") {
+        const state = asRecord(part?.state)
+        if (!state) return []
+        const status = asString(state?.status)
+        const callID = asString(part?.callID)
+        const tool = asString(part?.tool)
+        if (!sessionID || !callID || !tool || (status !== "completed" && status !== "error")) return []
+        const key = `tool:${sessionID}:${callID}`
         if (!this.seenTerminalEvents.add(key)) return []
-        if (part.state.status === "error") {
+        const timestamp = terminalTimestamp(state)
+        if (status === "error") {
           return [{
             kind: "tool",
-            sessionID: part.sessionID,
-            tool: part.tool,
-            callID: part.callID,
-            args: part.state.input,
-            output: part.state.error,
+            sessionID,
+            tool,
+            callID,
+            args: state.input,
+            output: state.error,
             success: false,
-            timestamp: part.state.time.end,
+            timestamp,
             source: "message.part.updated",
           }]
         }
-        const success = successFromMetadata(part.state.metadata)
+        const success = successFromMetadata(state.metadata)
         return [{
           kind: "tool",
-          sessionID: part.sessionID,
-          tool: part.tool,
-          callID: part.callID,
-          args: part.state.input,
-          output: part.state.output,
+          sessionID,
+          tool,
+          callID,
+          args: state.input,
+          output: state.output,
           ...(success === undefined ? {} : { success }),
-          timestamp: part.state.time.end,
+          timestamp,
           source: "message.part.updated",
         }]
       }
 
       if (
-        part.type === "text"
-        && this.messageRoles.get(part.messageID)?.role === "assistant"
-        && part.time?.end !== undefined
-        && !part.synthetic
-        && !part.ignored
+        partType === "text"
+        && sessionID
+        && messageID
+        && partID
+        && typeof part?.text === "string"
+        && this.messageRoles.get(messageID)?.role === "assistant"
+        && terminalTimestamp(part, false) !== undefined
+        && part.synthetic !== true
+        && part.ignored !== true
       ) {
-        const key = `text:${part.sessionID}:${part.id}`
+        const key = `text:${sessionID}:${partID}`
         if (!this.seenTerminalEvents.add(key)) return []
         return [{
           kind: "message",
-          sessionID: part.sessionID,
+          sessionID,
           message: part.text,
-          timestamp: part.time.end,
+          timestamp: terminalTimestamp(part),
           source: "assistant",
         }]
       }
       return []
     }
 
-    if (event.type === "session.error" && event.properties.sessionID) {
+    if (type === "session.error") {
+      const sessionID = asString(properties?.sessionID)
+      if (!sessionID) return []
       return [{
         kind: "session",
-        sessionID: event.properties.sessionID,
-        output: event.properties.error ?? "session error",
+        sessionID,
+        output: properties?.error ?? "session error",
         success: false,
         timestamp: Date.now(),
         source: "session.error",
@@ -113,8 +139,12 @@ export class OpenCodeEventAdapter {
     return []
   }
 
-  deletedSessionID(event: OpenCodeEvent): string | undefined {
-    return event.type === "session.deleted" ? event.properties.info.id : undefined
+  deletedSessionID(eventInput: unknown): string | undefined {
+    const event = asRecord(eventInput)
+    if (event?.type !== "session.deleted") return undefined
+    const properties = asRecord(event.properties)
+    const info = asRecord(properties?.info)
+    return asString(info?.id) ?? asString(properties?.sessionID)
   }
 
   clearSession(sessionID: string): void {
@@ -145,10 +175,26 @@ interface MessageIdentity {
 }
 
 function successFromMetadata(metadata: unknown): boolean | undefined {
-  if (typeof metadata !== "object" || metadata === null) return undefined
-  const record = metadata as Record<string, unknown>
+  const record = asRecord(metadata)
+  if (!record) return undefined
   const exitCode = record.exitCode ?? record.exit_code ?? record.code
   return typeof exitCode === "number" ? exitCode === 0 : undefined
+}
+
+function terminalTimestamp(value: Record<string, unknown>, fallbackToNow?: true): number
+function terminalTimestamp(value: Record<string, unknown>, fallbackToNow: false): number | undefined
+function terminalTimestamp(value: Record<string, unknown>, fallbackToNow = true): number | undefined {
+  const time = asRecord(value.time)
+  const end = time?.end
+  return typeof end === "number" && Number.isFinite(end) ? end : fallbackToNow ? Date.now() : undefined
+}
+
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  return typeof value === "object" && value !== null ? value as Record<string, unknown> : undefined
+}
+
+function asString(value: unknown): string | undefined {
+  return typeof value === "string" && value.length > 0 ? value : undefined
 }
 
 class BoundedSet {

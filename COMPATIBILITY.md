@@ -1,16 +1,26 @@
 # Compatibility
 
-## Verified release candidate
+## Compatibility contract
 
-| Surface | Verified version | Evidence |
+Agent Wingman targets the stable OpenCode V1 plugin contract, beginning with OpenCode `1.3.5`. It has no runtime dependency, peer dependency, exact-version gate, or public declaration import on an OpenCode package.
+
+Compatibility is based on capabilities and structural event data:
+
+- The adapter accepts unknown host values and ignores event shapes it does not understand.
+- Tool observations use `tool.execute.after` and the stable event stream, with cross-path deduplication.
+- Notifications, logs, and opt-in injection are attempted only when their client methods exist.
+- A missing or changed optional surface degrades to another delivery mode or a no-op; it never blocks OpenCode.
+
+## Continuous verification
+
+| OpenCode lane | Version | Purpose |
 |---|---:|---|
-| OpenCode CLI | `1.18.18` | Built plugin loaded from `.opencode/plugins/` in an isolated real CLI startup. |
-| `@opencode-ai/plugin` | `1.18.18` | Strict TypeScript compilation against stable `Hooks`, `Plugin`, and `PluginModule` types. |
-| Bun | `1.3.14` | Install, tests, build, trace replay, smoke, and package dry-run. |
-| Node types | `24.x` | Toolchain type compatibility only; the runtime target is Bun. |
+| Minimum | `1.3.5` | Protects the documented support floor. |
+| Midpoint | `1.14.17` | Detects compatibility assumptions hidden by endpoint-only testing. |
+| Current | npm `latest` | Tests the newest stable release on every pull request. |
 
-The stable V1 surfaces used are `tool.execute.after`, `event`, `message.updated`, `message.part.updated`, `session.error`, and `session.deleted`. Tool terminal events are deduplicated when both hook paths fire.
+Every lane loads the same built JavaScript artifact from `.opencode/plugins/` in an isolated real CLI startup. Unit tests separately exercise event parsing, malformed/unknown input, dual-path deduplication, and delivery contracts. Bun `1.3.14` runs the build and test toolchain.
 
-The plugin does not use OpenCode's beta V2 plugin API. Model-facing injection uses the stable V1 `session.prompt` client with `noReply` and remains disabled unless both `mode: "inject"` and `experimentalInject: true` are set.
+The package does not use OpenCode's beta V2 plugin API. Model-facing injection uses the stable V1 `session.prompt` client with `noReply` and remains disabled unless both `mode: "inject"` and `experimentalInject: true` are set.
 
-Compatibility claims apply only to versions exercised by CI. A dependency update must pass the real CLI load smoke before this table changes.
+“Version-neutral” means supported stable V1 releases are selected by capabilities instead of exact version numbers. It does not promise compatibility with pre-`1.3.5` releases, beta APIs, or a future breaking V2 contract. A failure in the npm `latest` lane blocks release until compatibility is restored or the support statement is deliberately revised.

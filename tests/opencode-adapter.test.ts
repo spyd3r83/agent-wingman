@@ -31,12 +31,12 @@ describe("OpenCodeEventAdapter", () => {
     const adapter = new OpenCodeEventAdapter(128)
     adapter.fromEvent({
       type: "message.updated",
-      properties: { info: { id: "assistant-1", role: "assistant" } },
-    } as never)
+      properties: { info: { id: "assistant-1", sessionID: "session-1", role: "assistant" } },
+    })
     adapter.fromEvent({
       type: "message.updated",
-      properties: { info: { id: "user-1", role: "user" } },
-    } as never)
+      properties: { info: { id: "user-1", sessionID: "session-1", role: "user" } },
+    })
 
     const part = {
       id: "part-1",
@@ -46,15 +46,15 @@ describe("OpenCodeEventAdapter", () => {
       text: "I will repeat the plan",
       time: { start: 1, end: 2 },
     } as const
-    expect(adapter.fromEvent({ type: "message.part.updated", properties: { part } } as never)).toHaveLength(1)
+    expect(adapter.fromEvent({ type: "message.part.updated", properties: { part } })).toHaveLength(1)
     expect(adapter.fromEvent({
       type: "message.part.updated",
       properties: { part: { ...part, id: "part-2", messageID: "user-1" } },
-    } as never)).toHaveLength(0)
+    })).toHaveLength(0)
     expect(adapter.fromEvent({
       type: "message.part.updated",
       properties: { part: { ...part, id: "part-3", synthetic: true } },
-    } as never)).toHaveLength(0)
+    })).toHaveLength(0)
   })
 
   test("deduplicates the after hook and terminal event paths", () => {
@@ -83,6 +83,17 @@ describe("OpenCodeEventAdapter", () => {
           },
         },
       },
-    } as never)).toHaveLength(0)
+    })).toHaveLength(0)
+  })
+
+  test("ignores unknown shapes and accepts the legacy deletion identity", () => {
+    const adapter = new OpenCodeEventAdapter(128)
+    expect(adapter.fromEvent(undefined)).toEqual([])
+    expect(adapter.fromEvent({ type: "message.part.updated", properties: { part: { type: "tool" } } })).toEqual([])
+    expect(adapter.fromToolAfter({ tool: "bash" }, {})).toBeUndefined()
+    expect(adapter.deletedSessionID({
+      type: "session.deleted",
+      properties: { sessionID: "session-legacy" },
+    })).toBe("session-legacy")
   })
 })

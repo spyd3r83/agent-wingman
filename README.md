@@ -26,6 +26,7 @@ The detector is deterministic and bounded. It does not call another model, uploa
 - Applies confidence scoring, cooldowns, per-episode caps, and global rate limits.
 - Defaults to a user-visible TUI notification; model-facing injection is explicit and off by default.
 - Fails open: detector or delivery errors never block OpenCode.
+- Uses a version-neutral runtime adapter with no OpenCode package dependency or exact-version gate.
 
 ## Install
 
@@ -95,11 +96,10 @@ bun test
 bun run typecheck
 bun run trace:replay
 bun run smoke
-bun run smoke:opencode
 bun run package:check
 ```
 
-`smoke:opencode` builds the distributable plugin, loads it through a real OpenCode `1.18.18` CLI in an isolated project, and requires the plugin's initialization receipt. The trace corpus separately enforces precision, recall, and duplicate-intervention gates.
+CI additionally loads the same distributable through real OpenCode minimum, midpoint, and npm `latest` runtimes. If OpenCode is installed locally, `bun run smoke:opencode` runs the same isolated load check. The trace corpus separately enforces precision, recall, and duplicate-intervention gates. See [COMPATIBILITY.md](./COMPATIBILITY.md) for the precise support contract.
 
 ## Scope
 
