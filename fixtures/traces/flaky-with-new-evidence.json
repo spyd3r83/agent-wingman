@@ -1,0 +1,11 @@
+{
+  "label": "Repeated tests during flaky diagnosis with new evidence",
+  "expectedFire": false,
+  "events": [
+    { "kind": "tool", "sessionID": "flaky", "tool": "bash", "args": { "command": "bun test --seed 1" }, "output": "timeout in test A", "success": false, "timestamp": 1000 },
+    { "kind": "tool", "sessionID": "flaky", "tool": "bash", "args": { "command": "bun test --seed 2" }, "output": "race in test B", "success": false, "timestamp": 2000 },
+    { "kind": "tool", "sessionID": "flaky", "tool": "read", "args": { "file": "tests/flaky.test.ts" }, "output": "new evidence", "success": true, "timestamp": 3000 },
+    { "kind": "tool", "sessionID": "flaky", "tool": "apply_patch", "args": { "file": "tests/flaky.test.ts" }, "output": "patched", "success": true, "timestamp": 4000 },
+    { "kind": "tool", "sessionID": "flaky", "tool": "bash", "args": { "command": "bun test --seed 3" }, "output": "pass", "success": true, "timestamp": 5000 }
+  ]
+}

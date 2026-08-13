@@ -1,0 +1,34 @@
+{
+  "name": "@agent-wingman/opencode-agent-wingman",
+  "version": "0.1.0",
+  "description": "Detector-first local struggle detection plugin for OpenCode.",
+  "type": "module",
+  "private": true,
+  "main": "dist/index.js",
+  "bin": {
+    "agent-wingman-replay": "dist/cli/replay.js"
+  },
+  "files": ["dist", "README.md", "docs", "assets"],
+  "scripts": {
+    "build": "bun build src/index.ts bin/replay.ts --outdir dist --target bun --format esm",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "trace:replay": "bun run bin/replay.ts fixtures/traces/*.json",
+    "smoke": "bun run scripts/smoke.ts",
+    "verify": "bun test && bun run typecheck && bun run build && bun run trace:replay && bun run smoke"
+  },
+  "dependencies": {
+    "@opencode-ai/plugin": "1.3.5"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^22.13.9",
+    "typescript": "^5.8.2"
+  },
+  "engines": {
+    "bun": ">=1.3.0",
+    "node": ">=22.0.0"
+  },
+  "license": "Apache-2.0"
+}

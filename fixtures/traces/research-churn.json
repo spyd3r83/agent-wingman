@@ -1,0 +1,17 @@
+{
+  "label": "Repeated source reads without new evidence",
+  "expectedFire": true,
+  "events": [
+    { "kind": "tool", "sessionID": "research", "tool": "read", "args": { "file": "src/index.ts" }, "output": "same content", "success": true, "timestamp": 1000 },
+    { "kind": "tool", "sessionID": "research", "tool": "read", "args": { "file": "src/index.ts" }, "output": "same content", "success": true, "timestamp": 2000 },
+    { "kind": "tool", "sessionID": "research", "tool": "read", "args": { "file": "src/index.ts" }, "output": "same content", "success": true, "timestamp": 3000 },
+    { "kind": "tool", "sessionID": "research", "tool": "read", "args": { "file": "src/index.ts" }, "output": "same content", "success": true, "timestamp": 4000 },
+    { "kind": "message", "sessionID": "research", "message": "I will inspect the same file again", "timestamp": 5000 },
+    { "kind": "message", "sessionID": "research", "message": "I will inspect the same file again", "timestamp": 6000 },
+    { "kind": "message", "sessionID": "research", "message": "I will inspect the same file again", "timestamp": 7000 },
+    { "kind": "tool", "sessionID": "research", "tool": "read", "args": { "file": "src/index.ts" }, "output": "same content", "success": true, "timestamp": 8000 },
+    { "kind": "tool", "sessionID": "research", "tool": "read", "args": { "file": "src/index.ts" }, "output": "same content", "success": true, "timestamp": 9000 },
+    { "kind": "tool", "sessionID": "research", "tool": "read", "args": { "file": "src/index.ts" }, "output": "same content", "success": true, "timestamp": 10000 },
+    { "kind": "tool", "sessionID": "research", "tool": "read", "args": { "file": "src/index.ts" }, "output": "same content", "success": true, "timestamp": 11000 }
+  ]
+}

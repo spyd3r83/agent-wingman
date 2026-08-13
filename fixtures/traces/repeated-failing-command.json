@@ -1,0 +1,11 @@
+{
+  "label": "Identical failing command five times with no change",
+  "expectedFire": true,
+  "events": [
+    { "kind": "tool", "sessionID": "fail", "tool": "bash", "args": { "command": "bun test" }, "output": "Error: test failed", "success": false, "timestamp": 1000 },
+    { "kind": "tool", "sessionID": "fail", "tool": "bash", "args": { "command": "bun test" }, "output": "Error: test failed", "success": false, "timestamp": 2000 },
+    { "kind": "tool", "sessionID": "fail", "tool": "bash", "args": { "command": "bun test" }, "output": "Error: test failed", "success": false, "timestamp": 3000 },
+    { "kind": "tool", "sessionID": "fail", "tool": "bash", "args": { "command": "bun test" }, "output": "Error: test failed", "success": false, "timestamp": 4000 },
+    { "kind": "tool", "sessionID": "fail", "tool": "bash", "args": { "command": "bun test" }, "output": "Error: test failed", "success": false, "timestamp": 5000 }
+  ]
+}

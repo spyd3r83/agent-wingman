@@ -1,0 +1,15 @@
+{
+  "label": "Several consultations with no implementation",
+  "expectedFire": true,
+  "events": [
+    { "kind": "consultation", "sessionID": "consult", "tool": "task", "args": { "agent": "reviewer", "question": "what now" }, "output": "advice", "success": true, "timestamp": 1000 },
+    { "kind": "consultation", "sessionID": "consult", "tool": "task", "args": { "agent": "reviewer", "question": "what now" }, "output": "advice", "success": true, "timestamp": 2000 },
+    { "kind": "consultation", "sessionID": "consult", "tool": "task", "args": { "agent": "reviewer", "question": "what now" }, "output": "advice", "success": true, "timestamp": 3000 },
+    { "kind": "message", "sessionID": "consult", "message": "I should ask another reviewer", "timestamp": 4000 },
+    { "kind": "message", "sessionID": "consult", "message": "I should ask another reviewer", "timestamp": 5000 },
+    { "kind": "message", "sessionID": "consult", "message": "I should ask another reviewer", "timestamp": 6000 },
+    { "kind": "consultation", "sessionID": "consult", "tool": "task", "args": { "agent": "reviewer", "question": "what now" }, "output": "advice", "success": true, "timestamp": 7000 },
+    { "kind": "consultation", "sessionID": "consult", "tool": "task", "args": { "agent": "reviewer", "question": "what now" }, "output": "advice", "success": true, "timestamp": 8000 },
+    { "kind": "consultation", "sessionID": "consult", "tool": "task", "args": { "agent": "reviewer", "question": "what now" }, "output": "advice", "success": true, "timestamp": 9000 }
+  ]
+}

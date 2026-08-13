@@ -1,0 +1,11 @@
+{
+  "label": "Test, edit, same test, edit, same test",
+  "expectedFire": false,
+  "events": [
+    { "kind": "tool", "sessionID": "productive", "tool": "bash", "args": { "command": "bun test" }, "output": "Error: assertion failed", "success": false, "timestamp": 1000 },
+    { "kind": "tool", "sessionID": "productive", "tool": "apply_patch", "args": { "file": "src/engine.ts" }, "output": "patched", "success": true, "timestamp": 2000 },
+    { "kind": "tool", "sessionID": "productive", "tool": "bash", "args": { "command": "bun test" }, "output": "Error: different assertion failed", "success": false, "timestamp": 3000 },
+    { "kind": "tool", "sessionID": "productive", "tool": "apply_patch", "args": { "file": "src/policy.ts" }, "output": "patched", "success": true, "timestamp": 4000 },
+    { "kind": "tool", "sessionID": "productive", "tool": "bash", "args": { "command": "bun test" }, "output": "pass", "success": true, "timestamp": 5000 }
+  ]
+}
