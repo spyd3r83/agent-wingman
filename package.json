@@ -35,13 +35,11 @@
     "smoke": "bun run scripts/smoke.ts",
     "smoke:opencode": "bun run build && bun run scripts/opencode-smoke.ts",
     "package:check": "bun run build && bun run scripts/package-check.ts",
-    "verify": "bun test && bun run typecheck && bun run trace:replay && bun run smoke && bun run smoke:opencode && bun run package:check"
+    "verify": "bun test && bun run typecheck && bun run trace:replay && bun run smoke && bun run package:check"
   },
   "devDependencies": {
-    "@opencode-ai/plugin": "1.18.18",
     "@types/bun": "1.3.14",
     "@types/node": "^24.12.0",
-    "opencode-ai": "1.18.18",
     "typescript": "^5.9.3"
   },
   "engines": {

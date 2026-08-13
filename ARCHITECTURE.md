@@ -20,7 +20,7 @@ OpenCode stable hooks and events
 - `src/state.ts` keeps bounded observations.
 - `src/detectors.ts` emits positive and negative struggle signals.
 - `src/policy.ts` applies scoring, cooldown, per-episode caps, and rate limits.
-- `src/adapters.ts` uses the current OpenCode SDK request shapes for structured logs, TUI notifications, and gated no-reply messages.
+- `src/adapters.ts` feature-detects stable OpenCode client surfaces for structured logs, TUI notifications, and gated no-reply messages.
 - `bin/replay.ts` evaluates labelled synthetic traces without a model.
 
 ## Data boundary

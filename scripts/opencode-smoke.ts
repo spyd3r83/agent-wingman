@@ -51,10 +51,20 @@ try {
   if (/failed to load plugin|module not found|cannot find module|plugin[^\n]*error/i.test(output)) {
     throw new Error(`OpenCode reported a plugin load error: ${output}`)
   }
-  if (!/agent-wingman.*initialized|service=agent-wingman[^\n]*initialized/i.test(output)) {
+  const initializationReceipts = output.match(/agent-wingman[^\n]*initialized/gi) ?? []
+  if (initializationReceipts.length === 0) {
     throw new Error(`OpenCode did not initialize Agent Wingman: ${output}`)
   }
-  console.log(JSON.stringify({ status: "ok", opencode: opencode, plugin: "agent-wingman" }))
+  if (initializationReceipts.length > 1) {
+    throw new Error(`OpenCode initialized Agent Wingman more than once: ${output}`)
+  }
+  console.log(JSON.stringify({
+    status: "ok",
+    version: process.env.OPENCODE_VERSION ?? "host-installed",
+    opencode,
+    plugin: "agent-wingman",
+    initializationReceipts: initializationReceipts.length,
+  }))
 } finally {
   await rm(root, { recursive: true, force: true })
 }

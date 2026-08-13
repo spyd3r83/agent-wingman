@@ -1,4 +1,3 @@
-import type { Hooks, Plugin, PluginModule } from "@opencode-ai/plugin"
 import { deliverDecision, logDiagnostic } from "./adapters"
 import { loadConfig } from "./config"
 import { WingmanEngine } from "./engine"
@@ -11,7 +10,35 @@ export { loadConfig } from "./config"
 export { OpenCodeEventAdapter } from "./opencode"
 export type { RawTraceEvent, ReplayResult, WingmanConfig } from "./types"
 
-export const AgentWingmanPlugin: Plugin = async (input, options): Promise<Hooks> => {
+/**
+ * The stable OpenCode plugin contract used by Agent Wingman.
+ *
+ * These structural types intentionally live in this package instead of leaking
+ * one host SDK release into the public declarations. OpenCode
+ * supplies the concrete client at runtime and the adapter feature-detects every
+ * surface it uses.
+ */
+export interface OpenCodePluginContext {
+  client: unknown
+  [key: string]: unknown
+}
+
+export interface OpenCodeHookSet {
+  event?: (input: unknown) => Promise<void>
+  "tool.execute.after"?: (input: unknown, output: unknown) => Promise<void>
+}
+
+export type OpenCodePlugin = (
+  input: OpenCodePluginContext,
+  options?: Record<string, unknown>,
+) => Promise<OpenCodeHookSet>
+
+export interface OpenCodePluginModule {
+  id: string
+  server: OpenCodePlugin
+}
+
+export const AgentWingmanPlugin: OpenCodePlugin = async (input, options): Promise<OpenCodeHookSet> => {
   const config = loadConfig(options)
   const engine = new WingmanEngine(config)
   const eventAdapter = new OpenCodeEventAdapter(config.maxSessions * config.maxObservations)
@@ -35,8 +62,9 @@ export const AgentWingmanPlugin: Plugin = async (input, options): Promise<Hooks>
       const raw = eventAdapter.fromToolAfter(toolInput, output)
       if (raw) await observe(raw)
     },
-    event: async ({ event }) => {
+    event: async (hookInput) => {
       try {
+        const event = readHookEvent(hookInput)
         const deletedSessionID = eventAdapter.deletedSessionID(event)
         if (deletedSessionID) {
           engine.deleteSession(deletedSessionID)
@@ -51,8 +79,11 @@ export const AgentWingmanPlugin: Plugin = async (input, options): Promise<Hooks>
   }
 }
 
-export const server = AgentWingmanPlugin
-
-const pluginModule = { id: "agent-wingman", server } satisfies PluginModule
+const pluginModule = { id: "agent-wingman", server: AgentWingmanPlugin } satisfies OpenCodePluginModule
 
 export default pluginModule
+
+function readHookEvent(input: unknown): unknown {
+  if (typeof input !== "object" || input === null) return undefined
+  return (input as Record<string, unknown>).event
+}
