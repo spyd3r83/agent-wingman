@@ -15,6 +15,10 @@ if (typeof pluginModule.default?.server !== "function") throw new Error("plugin 
 const manifest = JSON.parse(await readFile("package.json", "utf8")) as Record<string, unknown>
 if (manifest.private === true) throw new Error("package.json is still private")
 if (manifest.name !== "opencode-agent-wingman") throw new Error("unexpected package name")
+const replayExecutable = await readFile("dist/bin/replay.js", "utf8")
+if (!replayExecutable.startsWith("#!/usr/bin/env bun\n")) {
+  throw new Error("dist/bin/replay.js must retain its Bun executable shebang")
+}
 for (const field of ["dependencies", "peerDependencies", "optionalDependencies"]) {
   const dependencies = manifest[field]
   if (typeof dependencies !== "object" || dependencies === null) continue
