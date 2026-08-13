@@ -2,7 +2,12 @@
 
 All notable changes will be documented here.
 
-## 0.1.0 - Unreleased
+## 0.1.1 - 2026-08-13
+
+- Fixed the packaged replay executable so npm installations contain one valid Bun shebang.
+- Added an executable package regression test using a representative trace.
+
+## 0.1.0 - 2026-08-13
 
 - Added bounded, deterministic struggle detection and synthetic trace replay.
 - Added stable OpenCode event ingestion with terminal-event deduplication and assistant-only text observation.
