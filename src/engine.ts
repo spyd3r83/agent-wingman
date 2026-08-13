@@ -21,9 +21,26 @@ export class WingmanEngine {
     return this.sessions.get(sessionID)
   }
 
+  deleteSession(sessionID: string): void {
+    this.sessions.delete(sessionID)
+  }
+
+  get sessionCount(): number {
+    return this.sessions.size
+  }
+
   private session(sessionID: string): SessionState {
     const existing = this.sessions.get(sessionID)
-    if (existing) return existing
+    if (existing) {
+      this.sessions.delete(sessionID)
+      this.sessions.set(sessionID, existing)
+      return existing
+    }
+    while (this.sessions.size >= this.config.maxSessions) {
+      const oldest = this.sessions.keys().next().value as string | undefined
+      if (oldest === undefined) break
+      this.sessions.delete(oldest)
+    }
     const created = createSessionState(sessionID)
     this.sessions.set(sessionID, created)
     return created

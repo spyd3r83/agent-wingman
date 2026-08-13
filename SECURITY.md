@@ -2,33 +2,23 @@
 
 ## Supported versions
 
-The private MVP supports only the current development branch. Public support policy will be defined before release.
+Until `0.1.0` is released, only the latest commit on `main` receives security fixes. After release, the latest `0.1.x` version will be supported.
 
 ## Reporting a vulnerability
 
-Do not open a public issue for a suspected secret leak, prompt-injection path, unsafe model-facing delivery issue, or data exposure. Report privately to the repository maintainer through the private repository's security contact.
+Do not open a public issue for a suspected secret leak, unsafe model-facing injection, prompt-injection path, dependency compromise, or data exposure.
 
-Include:
+Use GitHub's **Security → Report a vulnerability** flow for this repository. Include the affected version or commit, synthetic reproduction steps, observed impact, and whether any credential or private content may have been exposed. Do not include real secrets or private transcripts.
 
-- affected commit;
-- reproduction steps using synthetic data;
-- observed impact;
-- whether raw tool output, credentials, or private content were exposed.
+## Security invariants
 
-## Threat model
+- Tool execution and permissions are never blocked or approved by Agent Wingman.
+- Advisories use fixed templates and never quote tool output.
+- Secret-like values are redacted before keyed fingerprinting.
+- Fingerprint keys are random, process-local, and never persisted.
+- Model-facing delivery is disabled unless two explicit settings agree.
+- Plugin-originated synthetic messages are excluded from detection.
+- Session, observation, episode, message-role, and deduplication state are bounded.
+- Detector and delivery failures are handled fail-open.
 
-Primary risks:
-
-- untrusted tool output being reflected as instructions;
-- secret-bearing command output entering diagnostics;
-- plugin-originated advisories triggering more advisories;
-- model-facing injection disturbing an active turn;
-- detector failure blocking normal work.
-
-Controls:
-
-- advisories use fixed templates and do not quote raw output;
-- secret-like values are redacted before hashing;
-- synthetic advisory prefixes are excluded from detection;
-- model-facing delivery is disabled by default;
-- errors are caught and handled fail-open.
+Dependency updates and OpenCode compatibility changes must pass tests, trace gates, type checks, package inspection, and a real CLI plugin-load smoke.

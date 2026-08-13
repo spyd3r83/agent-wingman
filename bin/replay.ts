@@ -17,7 +17,14 @@ export async function replayFile(file: string): Promise<ReplayResult> {
   let interventions = 0
   for (const event of trace.events) if (engine.observe(event)) interventions += 1
   const fired = interventions > 0
-  return { file: basename(file), expected: trace.expectedFire, fired, interventions, falsePositive: fired && !trace.expectedFire, falseNegative: !fired && trace.expectedFire }
+  return {
+    file: basename(file),
+    expected: trace.expectedFire,
+    fired,
+    interventions,
+    falsePositive: fired && !trace.expectedFire,
+    falseNegative: !fired && trace.expectedFire,
+  }
 }
 
 export function metrics(results: ReplayResult[]) {

@@ -1,11 +1,11 @@
 import type { NormalizedEvent, SessionState, WingmanConfig } from "./types"
 
-export function createSessionState(sessionID: string): SessionState {
-  return { sessionID, sequence: 0, observations: [], episodes: new Map(), interventionTimes: [], selfFingerprints: new Set() }
+export function createSessionState(sessionID: string, now = Date.now()): SessionState {
+  return { sessionID, sequence: 0, lastObservedAt: now, observations: [], episodes: new Map(), interventionTimes: [] }
 }
 
 export function addObservation(state: SessionState, event: NormalizedEvent, config: WingmanConfig): void {
-  if (event.selfOriginated) state.selfFingerprints.add(event.actionFingerprint)
+  state.lastObservedAt = event.timestamp
   if (!event.selfOriginated) state.observations.push(event)
   while (state.observations.length > config.maxObservations) state.observations.shift()
 }

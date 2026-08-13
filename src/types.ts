@@ -19,15 +19,16 @@ export type DetectionKind =
 export interface WingmanConfig {
   enabled: boolean
   mode: Mode
+  maxSessions: number
   maxObservations: number
+  maxEpisodesPerSession: number
   threshold: number
   minRelevantActions: number
   cooldownMs: number
+  maxInterventionsPerEpisode: number
   maxInterventionsPerWindow: number
   interventionWindowMs: number
-  ignoredAdvisoryLimit: number
   experimentalInject: boolean
-  supportedOpenCodeVersion: string
 }
 
 export interface RawTraceEvent {
@@ -72,17 +73,16 @@ export interface EpisodeState {
   score: number
   lastUpdated: number
   interventionCount: number
-  ignoredCount: number
   lastInterventionAt?: number | undefined
 }
 
 export interface SessionState {
   sessionID: string
   sequence: number
+  lastObservedAt: number
   observations: NormalizedEvent[]
   episodes: Map<string, EpisodeState>
   interventionTimes: number[]
-  selfFingerprints: Set<string>
 }
 
 export interface InterventionDecision {

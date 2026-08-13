@@ -1,35 +1,72 @@
 {
-  "name": "@agent-wingman/opencode-agent-wingman",
+  "name": "opencode-agent-wingman",
   "version": "0.1.0",
-  "description": "Detector-first local struggle detection plugin for OpenCode.",
+  "description": "Local, detector-first struggle detection for OpenCode agents.",
   "type": "module",
-  "private": true,
-  "main": "dist/src/index.js",
-  "bin": {
-    "agent-wingman-replay": "dist/bin/replay.js"
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    }
   },
-  "files": ["dist", "README.md", "docs", "assets"],
+  "bin": {
+    "agent-wingman-replay": "./dist/bin/replay.js"
+  },
+  "files": [
+    "dist",
+    "assets",
+    "README.md",
+    "CHANGELOG.md",
+    "COMPATIBILITY.md",
+    "CONFIGURATION.md",
+    "DETECTION.md",
+    "PRIVACY.md",
+    "SECURITY.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "build": "bun build src/index.ts bin/replay.ts --outdir dist --target bun --format esm",
+    "build": "bun run scripts/clean.ts && bun build src/index.ts bin/replay.ts --outdir dist --target bun --format esm && tsc -p tsconfig.build.json --emitDeclarationOnly",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
     "trace:replay": "bun run bin/replay.ts fixtures/traces/*.json",
     "smoke": "bun run scripts/smoke.ts",
-    "package:check": "bun run build && test -f dist/src/index.js && test -f dist/bin/replay.js && bun pm pack --dry-run",
-    "verify": "bun test && bun run typecheck && bun run build && bun run trace:replay && bun run smoke"
-  },
-  "dependencies": {
-    "@opencode-ai/plugin": "1.3.5"
+    "smoke:opencode": "bun run build && bun run scripts/opencode-smoke.ts",
+    "package:check": "bun run build && bun run scripts/package-check.ts",
+    "verify": "bun test && bun run typecheck && bun run trace:replay && bun run smoke && bun run smoke:opencode && bun run package:check"
   },
   "devDependencies": {
-    "@types/bun": "latest",
-    "@types/node": "^22.13.9",
-    "typescript": "^5.8.2"
+    "@opencode-ai/plugin": "1.18.18",
+    "@types/bun": "1.3.14",
+    "@types/node": "^24.12.0",
+    "opencode-ai": "1.18.18",
+    "typescript": "^5.9.3"
   },
   "engines": {
-    "bun": ">=1.3.0",
-    "node": ">=22.0.0"
+    "bun": ">=1.3.0"
   },
+  "packageManager": "bun@1.3.14",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spyd3r83/agent-wingman.git"
+  },
+  "homepage": "https://github.com/spyd3r83/agent-wingman#readme",
+  "bugs": {
+    "url": "https://github.com/spyd3r83/agent-wingman/issues"
+  },
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "ai-agent",
+    "developer-tools",
+    "loop-detection",
+    "typescript"
+  ],
   "license": "Apache-2.0"
 }

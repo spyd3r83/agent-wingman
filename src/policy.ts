@@ -15,17 +15,22 @@ export function evaluatePolicy(
   if (!repetition) return undefined
   const key = dominantEpisodeKey(positives)
   if (!key) return undefined
-  const episode = session.episodes.get(key) ?? { key, score: 0, lastUpdated: now, interventionCount: 0, ignoredCount: 0 }
+
+  const episode = session.episodes.get(key) ?? { key, score: 0, lastUpdated: now, interventionCount: 0 }
   episode.score = Math.max(0, episode.score * decayFactor(episode.lastUpdated, now) + detections.reduce((sum, item) => sum + item.score, 0))
   episode.lastUpdated = now
-  session.episodes.set(key, episode)
-  if (episode.score < config.threshold || !withinWindow(session, config, now)) return undefined
-  if (episode.ignoredCount >= config.ignoredAdvisoryLimit) return undefined
-  if (episode.lastInterventionAt && now - episode.lastInterventionAt < config.cooldownMs) return undefined
+  touchEpisode(session, episode, config.maxEpisodesPerSession)
+
+  if (episode.score < config.threshold) return undefined
+  if (episode.interventionCount >= config.maxInterventionsPerEpisode) return undefined
+  if (!withinWindow(session, config, now)) return undefined
+  if (episode.lastInterventionAt !== undefined && now - episode.lastInterventionAt < config.cooldownMs) return undefined
+
   episode.interventionCount += 1
   episode.lastInterventionAt = now
   session.interventionTimes.push(now)
   session.interventionTimes = session.interventionTimes.filter((time) => now - time <= config.interventionWindowMs)
+
   const message = buildMessage(positives)
   return {
     sessionID: session.sessionID,
@@ -34,13 +39,13 @@ export function evaluatePolicy(
     confidence: episode.score >= 11 ? "high" : "eligible",
     detections: positives,
     message,
-    notice: `Agent Wingman detected ${positives.length} struggle signal(s), score ${episode.score.toFixed(1)}.`,
+    notice: `Detected ${positives.length} struggle signal(s); score ${episode.score.toFixed(1)}.`,
     timestamp: now,
   }
 }
 
 function dominantEpisodeKey(detections: Detection[]): string | undefined {
-  return detections.sort((a, b) => b.score - a.score)[0]?.episodeKey
+  return [...detections].sort((left, right) => right.score - left.score)[0]?.episodeKey
 }
 
 function decayFactor(last: number, now: number): number {
@@ -52,14 +57,24 @@ function withinWindow(session: SessionState, config: WingmanConfig, now: number)
   return count < config.maxInterventionsPerWindow
 }
 
+function touchEpisode(session: SessionState, episode: SessionState["episodes"] extends Map<string, infer T> ? T : never, limit: number): void {
+  session.episodes.delete(episode.key)
+  session.episodes.set(episode.key, episode)
+  while (session.episodes.size > limit) {
+    const oldest = session.episodes.keys().next().value as string | undefined
+    if (oldest === undefined) break
+    session.episodes.delete(oldest)
+  }
+}
+
 function buildMessage(detections: Detection[]): string {
-  const dominant = detections.sort((a, b) => b.score - a.score)[0]
-  const advice = dominant?.kind === "read_or_research_churn"
-    ? "Summarize what is already known, identify the missing fact, and use a different source or path."
+  const dominant = [...detections].sort((left, right) => right.score - left.score)[0]
+  const nextStep = dominant?.kind === "read_or_research_churn"
+    ? "Identify the missing fact, then use a materially different source or path."
     : dominant?.kind === "consultation_churn"
-      ? "Consolidate the advice already received before consulting again."
+      ? "Consolidate the advice already received and act on one testable recommendation before consulting again."
       : dominant?.kind === "plan_restatement_similarity"
-        ? "Convert the current evidence into one concrete next action before revising the plan."
-        : "Do not retry unchanged. State a different hypothesis and test one materially different approach."
-  return `${SYNTHETIC_PREFIX} ${advice}`
+        ? "Turn the current evidence into one concrete action before revising the plan again."
+        : "State a different hypothesis and test one materially different approach."
+  return `${SYNTHETIC_PREFIX} You appear to be repeating an approach without enough new evidence. Pause and summarize what is known. ${nextStep}`
 }
