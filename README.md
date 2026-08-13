@@ -24,7 +24,7 @@ The detector is deterministic and bounded. It does not call another model, uploa
 - Observes completed assistant text without treating user prompts as agent struggle.
 - Detects repeated failures, error-family recurrence, read/search churn, plan repetition, consultation churn, and dense low-progress windows.
 - Applies confidence scoring, cooldowns, per-episode caps, and global rate limits.
-- Defaults to a user-visible TUI notification; model-facing injection is explicit and off by default.
+- Defaults to a bounded inline synthetic no-reply advisory; notification-only and shadow modes remain available.
 - Fails open: detector or delivery errors never block OpenCode.
 - Uses a version-neutral runtime adapter with no OpenCode package dependency or exact-version gate.
 
@@ -63,9 +63,9 @@ Or add it to `opencode.json`:
 
 | Mode | Model-visible | Behaviour |
 |---|---:|---|
-| `notify` | No | Default. Shows a warning toast and writes a structured local log. |
+| `inject` | Yes | Default. Adds a synthetic no-reply advisory and falls back to notify on failure. |
+| `notify` | No | Shows a warning toast and writes a structured local log. |
 | `shadow` | No | Logs eligible interventions without displaying them. Good for calibration. |
-| `inject` | Yes, opt-in | Adds a synthetic no-reply message. Requires `experimentalInject: true`; falls back to notify on failure. |
 
 Example with options:
 
@@ -104,6 +104,8 @@ CI additionally loads the same distributable through real OpenCode minimum, midp
 ## Scope
 
 Agent Wingman is advisory. It does not browse, execute tools, mutate files, delegate agents, make access-control decisions, or claim that deterministic detection can identify every unproductive loop. Start in `shadow` mode when evaluating unfamiliar workflows.
+
+The default inline advisory is a fixed template marked `synthetic` and `noReply`. It never includes raw prompts, tool arguments, tool output, source text, or command results. Set `mode` to `notify` for user-only delivery or `shadow` for log-only calibration.
 
 ## Contributing
 

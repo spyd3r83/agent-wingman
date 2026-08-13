@@ -2,7 +2,7 @@ import type { Mode, WingmanConfig } from "./types"
 
 export const DEFAULT_CONFIG: WingmanConfig = {
   enabled: true,
-  mode: "notify",
+  mode: "inject",
   maxSessions: 64,
   maxObservations: 128,
   maxEpisodesPerSession: 64,
@@ -12,7 +12,7 @@ export const DEFAULT_CONFIG: WingmanConfig = {
   maxInterventionsPerEpisode: 2,
   maxInterventionsPerWindow: 2,
   interventionWindowMs: 30 * 60 * 1000,
-  experimentalInject: false,
+  experimentalInject: true,
 }
 
 export function loadConfig(options: Record<string, unknown> = {}, env = process.env): WingmanConfig {
