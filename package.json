@@ -1,6 +1,6 @@
 {
   "name": "opencode-agent-wingman",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Local, detector-first struggle detection for OpenCode agents.",
   "type": "module",
   "main": "./dist/src/index.js",
@@ -27,7 +27,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "bun run scripts/clean.ts && bun build src/index.ts --outdir dist/src --target bun --format esm && bun build bin/replay.ts --outdir dist/bin --target bun --format esm --banner='#!/usr/bin/env bun' && tsc -p tsconfig.build.json --emitDeclarationOnly",
+    "build": "bun run scripts/clean.ts && bun build src/index.ts --outdir dist/src --target bun --format esm && bun build bin/replay.ts --outdir dist/bin --target bun --format esm && tsc -p tsconfig.build.json --emitDeclarationOnly",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "test": "bun test",

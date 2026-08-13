@@ -22,6 +22,20 @@ const replayExecutable = await readFile("dist/bin/replay.js", "utf8")
 if (!replayExecutable.startsWith("#!/usr/bin/env bun\n")) {
   throw new Error("dist/bin/replay.js must retain its Bun executable shebang")
 }
+if (replayExecutable.match(/^#!\/usr\/bin\/env bun$/gm)?.length !== 1) {
+  throw new Error("dist/bin/replay.js must contain exactly one Bun shebang")
+}
+const replay = Bun.spawn(["bun", "dist/bin/replay.js", "fixtures/traces/repeated-failing-command.json"], {
+  stdout: "pipe",
+  stderr: "pipe",
+})
+const [replayExitCode, replayStdout, replayStderr] = await Promise.all([
+  replay.exited,
+  new Response(replay.stdout).text(),
+  new Response(replay.stderr).text(),
+])
+if (replayExitCode !== 0) throw new Error(`published replay CLI failed: ${replayStderr}`)
+if (!replayStdout.includes('"fired": true')) throw new Error("published replay CLI did not process the trace")
 for (const field of ["dependencies", "peerDependencies", "optionalDependencies"]) {
   const dependencies = manifest[field]
   if (typeof dependencies !== "object" || dependencies === null) continue
