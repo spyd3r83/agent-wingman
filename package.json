@@ -12,7 +12,7 @@
     }
   },
   "bin": {
-    "agent-wingman-replay": "./dist/bin/replay.js"
+    "agent-wingman-replay": "dist/bin/replay.js"
   },
   "files": [
     "dist",
