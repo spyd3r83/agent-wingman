@@ -5,8 +5,8 @@ Options may be supplied in the OpenCode plugin tuple. Environment variables are 
 | Option | Environment | Default | Accepted range |
 |---|---|---:|---:|
 | `enabled` | `AGENT_WINGMAN_ENABLED` | `true` | boolean |
-| `mode` | `AGENT_WINGMAN_MODE` | `notify` | `shadow`, `notify`, `inject` |
-| `experimentalInject` | `AGENT_WINGMAN_EXPERIMENTAL_INJECT` | `false` | boolean |
+| `mode` | `AGENT_WINGMAN_MODE` | `inject` | `shadow`, `notify`, `inject` |
+| `experimentalInject` | `AGENT_WINGMAN_EXPERIMENTAL_INJECT` | `true` | boolean |
 | `threshold` | — | `8` | 1–100 |
 | `minRelevantActions` | — | `8` | 1–100 |
 | `maxSessions` | — | `64` | 1–1024 |
@@ -17,7 +17,7 @@ Options may be supplied in the OpenCode plugin tuple. Environment variables are 
 | `maxInterventionsPerWindow` | — | `2` | 1–100 |
 | `interventionWindowMs` | — | `1800000` | 1000–86400000 |
 
-Invalid numeric values fall back to defaults; out-of-range numeric values are clamped. Unknown modes fall back to `notify`.
+Invalid numeric values fall back to defaults; out-of-range numeric values are clamped. Unknown modes fall back to `inject`.
 
 Recommended calibration:
 
@@ -27,7 +27,7 @@ Recommended calibration:
 }
 ```
 
-Default notification:
+Default inline injection:
 
 ```json
 {
@@ -35,15 +35,14 @@ Default notification:
 }
 ```
 
-Model-facing injection is explicit:
+Notification-only override:
 
 ```json
 {
   "plugin": [["opencode-agent-wingman", {
-    "mode": "inject",
-    "experimentalInject": true
+    "mode": "notify"
   }]]
 }
 ```
 
-If injection fails, delivery falls back to a TUI notification and then to a structured local log. Detection never blocks the active OpenCode operation.
+The `experimentalInject` setting remains as a compatibility and emergency kill switch. Setting it to `false` while `mode` is `inject` forces notification delivery. If the host injection surface is missing or fails, delivery also falls back to a TUI notification and then to a structured local log. Detection never blocks the active OpenCode operation.

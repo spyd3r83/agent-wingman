@@ -9,7 +9,7 @@ All notable changes will be documented here.
 - Added a version-neutral structural adapter with no OpenCode runtime, peer, or public type dependency.
 - Verified the same artifact against OpenCode `1.3.5`, `1.14.17`, and the latest stable release.
 - Corrected stable V1 TUI and no-reply request contracts.
-- Added notify, shadow, and explicit opt-in injection modes with fail-open fallback.
+- Added default inline synthetic injection, notification-only and shadow overrides, and fail-open delivery fallback.
 - Added real OpenCode CLI load testing, package-content checks, and pinned CI actions.
 - Added ephemeral HMAC fingerprints, bounded cross-session state, and public-safe documentation.
 - Added an original Agent Wingman vector logo.

@@ -84,14 +84,16 @@ describe("delivery adapters", () => {
     }])
   })
 
-  test("uses no-reply synthetic parts for opt-in injection", async () => {
+  test("uses no-reply synthetic parts for default inline injection", async () => {
     const calls: unknown[] = []
     const result = await deliverDecision({
       session: { prompt: async (input: unknown) => { calls.push(input) } },
       app: { log: async () => undefined },
-    }, decision, { ...loadConfig(), mode: "inject", experimentalInject: true })
+    }, decision, loadConfig({}, {}))
 
     expect(result.delivered).toBe(true)
+    expect(result.mode).toBe("inject")
+    expect(result.fallbackUsed).toBe(false)
     expect(calls).toEqual([{
       path: { id: "s" },
       body: {
@@ -102,7 +104,7 @@ describe("delivery adapters", () => {
     }])
   })
 
-  test("falls back to notify when injection is not explicitly enabled", async () => {
+  test("falls back to notify when the injection safety switch is disabled", async () => {
     const calls: unknown[] = []
     const result = await deliverDecision({
       tui: { showToast: async (input: unknown) => { calls.push(input) } },
@@ -115,9 +117,9 @@ describe("delivery adapters", () => {
 })
 
 describe("configuration", () => {
-  test("defaults to non-model-facing notification mode", () => {
-    expect(loadConfig({}, {}).mode).toBe("notify")
-    expect(loadConfig({}, {}).experimentalInject).toBe(false)
+  test("defaults to active inline injection", () => {
+    expect(loadConfig({}, {}).mode).toBe("inject")
+    expect(loadConfig({}, {}).experimentalInject).toBe(true)
   })
 
   test("clamps numeric options to safe bounds", () => {
