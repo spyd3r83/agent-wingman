@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { deliverDecision } from "../src/adapters"
+import { ContextAdvisories, deliverDecision } from "../src/adapters"
 import { DEFAULT_CONFIG, loadConfig } from "../src/config"
 import { WingmanEngine } from "../src/engine"
 import { redactSensitive, stableFingerprint } from "../src/fingerprint"
@@ -84,25 +84,91 @@ describe("delivery adapters", () => {
     }])
   })
 
-  test("uses no-reply synthetic parts for default inline injection", async () => {
-    const calls: unknown[] = []
+  test('queues context without creating a user message or starting a reply', async () => {
+    const calls: unknown[] = [];
+    const config = loadConfig({}, {});
+    const context = new ContextAdvisories(config);
+    const info = {
+      id: 'msg_worker', sessionID: 's', role: 'user', agent: 'change-engineer',
+      model: {providerID: 'openai', modelID: 'worker-model'},
+      variant: 'xhigh', tools: {task: false}, system: 'Retain worker instructions.',
+      format: {type: 'text'},
+      executionContext: {invocationID: 'invocation-worker', runID: 'run-worker'},
+    };
+    const original = structuredClone(info);
+    const output = {messages: [{info, parts: [{type: 'text', text: 'Original task'}]}]};
+    expect(context.apply(output, 1)).toBe(0);
     const result = await deliverDecision({
-      session: { prompt: async (input: unknown) => { calls.push(input) } },
-      app: { log: async () => undefined },
-    }, decision, loadConfig({}, {}))
+      session: {prompt: async (input: unknown) => { calls.push(input); }},
+      app: {log: async () => undefined},
+    }, decision, config, context);
+    expect(result.mode).toBe('inject');
+    expect(result.delivered).toBe(true);
+    expect(calls).toHaveLength(0);
+    expect(context.apply(output, 1)).toBe(1);
+    expect(output.messages[0]?.info).toBe(info);
+    expect(info).toEqual(original);
+    expect(output.messages[0]?.parts[0]).toEqual({type: 'text', text: 'Original task'});
+    expect(output.messages[0]?.parts[1]).toMatchObject({
+      sessionID: 's', messageID: 'msg_worker',
+      type: 'text', text: decision.message, synthetic: true,
+    });
+    expect(context.apply(output, 1)).toBe(0);
+  });
 
-    expect(result.delivered).toBe(true)
-    expect(result.mode).toBe("inject")
-    expect(result.fallbackUsed).toBe(false)
-    expect(calls).toEqual([{
-      path: { id: "s" },
-      body: {
-        noReply: true,
-        parts: [{ type: "text", text: "synthetic advisory", synthetic: true }],
-      },
-      throwOnError: true,
-    }])
-  })
+  test('falls back to notification when no context hook is supplied', async () => {
+    const prompts: unknown[] = [];
+    const notices: unknown[] = [];
+    const result = await deliverDecision({
+      session: {prompt: async (input: unknown) => { prompts.push(input); }},
+      tui: {showToast: async (input: unknown) => { notices.push(input); }},
+    }, decision, loadConfig({}, {}));
+    expect(result.mode).toBe('notify');
+    expect(result.fallbackUsed).toBe(true);
+    expect(prompts).toHaveLength(0);
+    expect(notices).toHaveLength(1);
+  });
+
+  test('bounds, expires and clears pending advisories', () => {
+    const config = {...loadConfig({}, {}), maxSessions: 1, maxInterventionsPerWindow: 1};
+    const context = new ContextAdvisories(config);
+    const old = {messages: [{
+      info: {id: 'msg_old', sessionID: 'old', role: 'user'}, parts: [],
+    }]};
+    const current = {messages: [{
+      info: {id: 'msg_current', sessionID: 's', role: 'user'}, parts: [],
+    }]};
+    context.apply(old, 1);
+    expect(context.enqueue({...decision, sessionID: 'old'})).toBe(true);
+    context.apply(current, 1);
+    expect(context.enqueue({...decision, sessionID: 'old'})).toBe(false);
+    context.enqueue(decision);
+    context.enqueue({...decision, message: 'Newest advisory'});
+    expect(context.apply(current, 1)).toBe(1);
+    expect(current.messages[0]?.parts).toHaveLength(1);
+    expect(current.messages[0]?.parts[0]).toMatchObject({text: 'Newest advisory'});
+    expect(context.apply(old, 1)).toBe(0);
+    context.apply(current, 1);
+    context.enqueue(decision);
+    expect(context.apply(current, config.interventionWindowMs + 2)).toBe(0);
+    context.enqueue(decision);
+    context.clearSession('s');
+    expect(context.apply(current, 1)).toBe(0);
+  });
+
+  test('uses the latest user message only in the matching session', () => {
+    const context = new ContextAdvisories(loadConfig({}, {}));
+    const output = {messages: [
+      {info: {id: 'msg_old', sessionID: 's', role: 'user'}, parts: []},
+      {info: {id: 'msg_current', sessionID: 's', role: 'user'}, parts: []},
+      {info: {id: 'msg_foreign', sessionID: 'foreign', role: 'user'}, parts: []},
+      {info: {id: 'msg_assistant', sessionID: 's', role: 'assistant'}, parts: []},
+    ]};
+    context.apply(output, 1);
+    context.enqueue(decision);
+    expect(context.apply(output, 1)).toBe(1);
+    expect(output.messages.map(message => message.parts.length)).toEqual([0, 1, 0, 0]);
+  });
 
   test("falls back to notify when the injection safety switch is disabled", async () => {
     const calls: unknown[] = []

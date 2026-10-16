@@ -2,6 +2,13 @@
 
 All notable changes will be documented here.
 
+## Unreleased
+
+- Added visible user-role advisories while preserving worker metadata through the native message-creation hook. Delivery uses `noReply` and may cause one additional sequential model request. Ambiguous writes are not retried.
+- Bound advisory delivery to the active user-message root and execution generation, preserving agent, model, variant, permissions and execution metadata.
+- Excluded compaction transforms from advisory consumption and dropped advice when the user-message root or execution generation changes.
+- Added regression coverage for context preservation, idle cleanup, expiry, bounds, compaction and run boundaries.
+
 ## 0.1.1 - 2026-08-13
 
 - Fixed the packaged replay executable so npm installations contain one valid Bun shebang.
