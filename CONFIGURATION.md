@@ -45,4 +45,4 @@ Notification-only override:
 }
 ```
 
-The `experimentalInject` setting remains as a compatibility and emergency kill switch. Setting it to `false` while `mode` is `inject` forces notification delivery. If the host injection surface is missing or fails, delivery also falls back to a TUI notification and then to a structured local log. Detection never blocks the active OpenCode operation.
+The `experimentalInject` setting remains as a compatibility and emergency kill switch. Setting it to `false` while `mode` is `inject` forces notification delivery. If the native context hook has not supplied a current user root, delivery falls back to a TUI notification and then to a structured local log. Queued advice is bounded by `maxSessions`, `maxInterventionsPerWindow` and `interventionWindowMs`; idle, deletion or a changed root clears it. Context-hook errors are contained and logged. Detection never blocks the active OpenCode operation.

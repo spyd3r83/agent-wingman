@@ -31,7 +31,7 @@ export function evaluatePolicy(
   session.interventionTimes.push(now)
   session.interventionTimes = session.interventionTimes.filter((time) => now - time <= config.interventionWindowMs)
 
-  const message = buildMessage(positives)
+  const message = buildMessage()
   return {
     sessionID: session.sessionID,
     episodeKey: key,
@@ -67,14 +67,13 @@ function touchEpisode(session: SessionState, episode: SessionState["episodes"] e
   }
 }
 
-function buildMessage(detections: Detection[]): string {
-  const dominant = [...detections].sort((left, right) => right.score - left.score)[0]
-  const nextStep = dominant?.kind === "read_or_research_churn"
-    ? "Identify the missing fact, then use a materially different source or path."
-    : dominant?.kind === "consultation_churn"
-      ? "Consolidate the advice already received and act on one testable recommendation before consulting again."
-      : dominant?.kind === "plan_restatement_similarity"
-        ? "Turn the current evidence into one concrete action before revising the plan again."
-        : "State a different hypothesis and test one materially different approach."
-  return `${SYNTHETIC_PREFIX} You appear to be repeating an approach without enough new evidence. Pause and summarize what is known. ${nextStep}`
+function buildMessage(): string {
+  return `${SYNTHETIC_PREFIX} `
+    + "The current approach appears repetitive and lacks sufficient new evidence. "
+    + "Pause to consolidate what is known, then examine relevant context beyond "
+    + "your existing knowledge by consulting external sources, official "
+    + "documentation, standards or tools. "
+    + "Develop an alternative hypothesis and assess it using a significantly "
+    + "different method before proceeding with the work. "
+    + "Don't end your turn now, continue."
 }

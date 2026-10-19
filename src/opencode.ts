@@ -189,7 +189,7 @@ function terminalTimestamp(value: Record<string, unknown>, fallbackToNow = true)
   return typeof end === "number" && Number.isFinite(end) ? end : fallbackToNow ? Date.now() : undefined
 }
 
-function asRecord(value: unknown): Record<string, unknown> | undefined {
+export function asRecord(value: unknown): Record<string, unknown> | undefined {
   return typeof value === "object" && value !== null ? value as Record<string, unknown> : undefined
 }
 
