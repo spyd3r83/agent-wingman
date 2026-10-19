@@ -71,8 +71,8 @@ function buildMessage(): string {
   return `${SYNTHETIC_PREFIX} `
     + "The current approach appears repetitive and lacks sufficient new evidence. "
     + "Pause to consolidate what is known, then examine relevant context beyond "
-    + "your existing knowledge by consulting external sources or tools. "
+    + "your existing knowledge by consulting external sources, official "
+    + "documentation, standards or tools. "
     + "Develop an alternative hypothesis and assess it using a significantly "
-    + "different method before proceeding with the work. "
-    + "Don't end your turn now, continue."
+    + "different method before proceeding with the work."
 }
