@@ -74,5 +74,6 @@ function buildMessage(): string {
     + "your existing knowledge by consulting external sources, official "
     + "documentation, standards or tools. "
     + "Develop an alternative hypothesis and assess it using a significantly "
-    + "different method before proceeding with the work."
+    + "different method before proceeding with the work. "
+    + "Don't end your turn now, continue."
 }
